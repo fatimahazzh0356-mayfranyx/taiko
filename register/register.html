@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register - TAIKO & U</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="register.css">
+</head>
+
+
+<body>
+  <div class="register-container">
+    <div class="register-card">
+
+      <div class="register-header">
+        <h1>TAIKO & U</h1>
+        <p>Daftarkan akun dan data UMKM Anda untuk memulai analisis organisasi.</p>
+      </div>
+
+      <h2>Buat Akun</h2>
+
+      <form onsubmit="handleRegister(event)">
+
+        <div class="form-group">
+          <label>Nama Pengguna</label>
+          <input id="registerName" type="text" placeholder="Masukkan nama Anda" required>
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input id="registerEmail" type="email" placeholder="Masukkan email" required>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <input id="registerPassword" type="password" placeholder="Buat password" required>
+        </div>
+
+        <div class="form-group">
+          <label>Nama UMKM</label>
+          <input id="umkmName" type="text" placeholder="Contoh: Kopi Nusantara" required>
+        </div>
+
+        <div class="form-group">
+          <label>Sektor UMKM</label>
+          <input id="umkmSector" type="text" placeholder="Contoh: Kuliner, Fashion, Jasa" required>
+        </div>
+
+        <div class="form-group">
+          <label>Role Pengguna</label>
+          <select id="userRole" required>
+            <option value="">Pilih role</option>
+            <option value="owner">Owner / Pemilik UMKM</option>
+            <option value="employee">Karyawan / Tim UMKM</option>
+          </select>
+        </div>
+
+        <small class="form-help">
+          Jika Anda karyawan, pastikan nama UMKM diisi sama seperti yang didaftarkan owner.
+        </small>
+
+        <button type="submit" class="btn-register">Daftar</button>
+      </form>
+
+      <p class="register-note">
+        Sudah punya akun?
+        <a href="../login/login.html">Masuk di sini</a>
+      </p>
+
+      <a href="../landing page/landing.html" class="back-link">
+        ← Kembali ke Landing Page
+      </a>
+
+    </div>
+  </div>
+
+  <script>
+  function handleRegister(e) {
+    e.preventDefault();
+
+    const name = document.getElementById('registerName').value.trim();
+    const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+    const password = document.getElementById('registerPassword').value.trim();
+    const umkmName = document.getElementById('umkmName').value.trim();
+    const umkmSector = document.getElementById('umkmSector').value.trim();
+    const role = document.getElementById('userRole').value;
+
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    const umkms = JSON.parse(localStorage.getItem('umkms')) || [];
+
+    const existingEmail = users.find(user => user.email === email);
+
+    if (existingEmail) {
+      alert('Email sudah terdaftar. Silakan gunakan email lain atau login.');
+      return;
+    }
+
+    function normalize(text) {
+  return text.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+let umkm = umkms.find(item =>
+  normalize(item.nama_umkm) === normalize(umkmName)
+);
+
+    if (role === 'owner') {
+      if (umkm) {
+        alert('UMKM ini sudah terdaftar. Jika Anda bagian dari UMKM ini, daftar sebagai karyawan.');
+        return;
+      }
+
+      umkm = {
+        umkm_id: Date.now(),
+        nama_umkm: umkmName,
+        sektor: umkmSector,
+        owner_email: email
+      };
+
+      umkms.push(umkm);
+      localStorage.setItem('umkms', JSON.stringify(umkms));
+    }
+
+    if (role === 'employee') {
+      if (!umkm) {
+        alert('UMKM belum ditemukan. Pastikan owner sudah mendaftarkan UMKM terlebih dahulu.');
+        return;
+      }
+    }
+
+    const userData = {
+      user_id: Date.now() + Math.floor(Math.random() * 1000),
+      name,
+      email,
+      password,
+      role,
+      umkm_id: umkm.umkm_id,
+      umkm: {
+        umkm_id: umkm.umkm_id,
+        nama_umkm: umkm.nama_umkm,
+        sektor: umkm.sektor
+      }
+    };
+
+    users.push(userData);
+
+    localStorage.setItem('users', JSON.stringify(users));
+
+    // Tetap simpan registeredUser untuk kompatibilitas login lama
+    localStorage.setItem('registeredUser', JSON.stringify(userData));
+
+    localStorage.setItem('isLoggedIn', 'false');
+
+    alert('Registrasi berhasil. Silakan login.');
+    window.location.href = '../login/login.html';
+  }
+  </script>
+</body>
+</html>

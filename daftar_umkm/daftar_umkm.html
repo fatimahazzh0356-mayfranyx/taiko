@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daftar UMKM - TAIKO & U</title>
+  <link rel="stylesheet" href="daftar_umkm.css" />
+</head>
+
+
+<body>
+  <div class="page">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>TAIKO & U</h2>
+        <p>Direktori UMKM</p>
+      </div>
+
+      <nav class="menu">
+        <a href="../beranda/index.html">Beranda</a>
+        <a class="active" href="#">Daftar UMKM</a>
+        <a href="../kuisioner/kuisioner.html">Kuesioner</a>
+        <a href="../detail/detail_analisis.html">Detail Analisis</a>
+        <a href="../saran_rekomendasi/saran_rekomendasi.html">Saran & Rekomendasi</a>
+        <a href="../pengaturan/pengaturan.html">Pengaturan</a>
+        <a href="../profil/profil.html">Profil</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <span class="eyebrow">Direktori UMKM</span>
+          <h1>Daftar UMKM Terdaftar</h1>
+          <p>Menampilkan UMKM yang terdaftar beserta status kesehatan organisasinya.</p>
+        </div>
+
+        <div class="search-box">
+          <input id="searchInput" type="text" placeholder="Cari UMKM atau sektor..." />
+        </div>
+      </header>
+
+      <section class="summary-grid">
+        <div class="summary-card">
+          <span>Total UMKM</span>
+          <h3 id="totalUmkm">0</h3>
+          <p>Jumlah UMKM yang tersedia di sistem.</p>
+        </div>
+
+        <div class="summary-card">
+          <span>Skor Rata-rata</span>
+          <h3 id="averageScore">0%</h3>
+          <p>Rata-rata kesehatan seluruh UMKM.</p>
+        </div>
+
+        <div class="summary-card danger">
+          <span>Butuh Perhatian</span>
+          <h3 id="needAttention">0</h3>
+          <p>UMKM kategori Buruk atau Cukup.</p>
+        </div>
+      </section>
+
+      <section id="umkmGrid" class="umkm-grid"></section>
+    </main>
+  </div>
+
+  <script src="daftar_umkm.js"></script>
+</body>
+</html>

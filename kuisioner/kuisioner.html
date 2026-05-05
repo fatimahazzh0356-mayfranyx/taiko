@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kuesioner - TAIKO & U</title>
+  <link rel="stylesheet" href="kuisioner.css" />
+</head>
+
+
+<body>
+  <div class="assessment-page">
+
+    <aside class="sidebar">
+      <h2>TAIKO & U</h2>
+      <p>Health Assessment<br>6 Tahap Evaluasi</p>
+
+      <nav id="stepMenu"></nav>
+
+      <a href="../beranda/index.html" class="back-dashboard">← Kembali ke Dashboard</a>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <span id="phaseLabel">ASSESSMENT</span>
+          <h1 id="sectionTitle">Bagian 1</h1>
+          <p id="sectionDesc"></p>
+        </div>
+
+        <div class="progress-text">
+          <strong id="progressNumber">16%</strong>
+          <span>Selesai</span>
+        </div>
+      </header>
+
+      <div class="progress-bar">
+        <div id="progressFill"></div>
+      </div>
+
+      <section id="questionContainer" class="question-list"></section>
+
+      <div class="navigation">
+        <button id="prevBtn" class="btn-secondary">← Kembali</button>
+        <button id="nextBtn" class="btn-primary">Selanjutnya →</button>
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    const sections = [
+      {
+        menu: "Pendahuluan",
+        label: "EVALUASI BISNIS",
+        title: "Bagian 1: Sumber Daya & Legalitas",
+        desc: "Jawab pertanyaan dasar mengenai kesiapan legalitas, lokasi, fasilitas, dan sumber modal usaha.",
+        questions: [
+          { id: "OH1", text: "Izin usaha resmi (NIB/SIUP)?", type: "choice", options: ["Tidak", "Sedang Proses", "Ya"] },
+          { id: "OH2", text: "Lokasi tetap?", type: "choice", options: ["Tidak", "Sedang Proses", "Ya"] },
+          { id: "OH3", text: "Alat/mesin produksi sendiri?", type: "choice", options: ["Tidak", "Sedang Proses", "Ya"] },
+          { id: "OH4", text: "Standar sertifikasi (Halal/PIRT/BPOM)?", type: "choice", options: ["Tidak", "Sedang Proses", "Ya"] },
+          { id: "OH5", text: "Pencatatan keuangan rutin?", type: "choice", options: ["Tidak", "Sedang Proses", "Ya"] },
+          { id: "OH6", text: "Dari mana sumber modal utama Anda?", type: "card", options: ["Modal Sendiri", "Keluarga/Teman", "Pinjaman Bank"] }
+        ]
+      },
+      {
+        menu: "Operasional",
+        label: "OPERASIONAL",
+        title: "Bagian 2: Gaya Kepemimpinan",
+        desc: "Nilai bagaimana kepemimpinan dijalankan dalam operasional organisasi sehari-hari.",
+        questions: [
+          { id: "OH7", text: "Apakah pemilik atau pimpinan turun langsung dalam operasional harian?", type: "scale" },
+          { id: "OH8", text: "Apakah pimpinan memberikan contoh etos kerja yang baik bagi seluruh tim?", type: "scale" },
+          { id: "OH9", text: "Apakah pimpinan memberikan instruksi kerja yang jelas dan mudah dipahami?", type: "scale" },
+          { id: "OH10", text: "Apakah pimpinan bersikap adil dalam pembagian tugas dan apresiasi?", type: "scale" },
+          { id: "OH11", text: "Apakah pimpinan terbuka untuk mendengar keluhan dan masukan staf?", type: "scale" },
+          { id: "OH12", text: "Apakah pimpinan menunjukkan kepedulian terhadap kesejahteraan karyawan?", type: "scale" }
+        ]
+      },
+      {
+        menu: "Finansial",
+        label: "ASSESSMENT PHASE 03",
+        title: "Bagian 3: Kualitas Tempat Kerja",
+        desc: "Evaluasi kenyamanan, keamanan, dan kelayakan lingkungan kerja organisasi.",
+        questions: [
+          { id: "OH13", text: "Bagaimana tingkat kebersihan dan kerapian di area kerja saat ini?", type: "scale", sub: "Higienitas" },
+          { id: "OH14", text: "Apakah semua peralatan kerja dipastikan dalam kondisi aman dan terawat?", type: "scale", sub: "Keamanan Alat" },
+          { id: "OH15", text: "Apakah suasana di lingkungan kerja terasa nyaman untuk produktivitas?", type: "scale", sub: "Kenyamanan" },
+          { id: "OH16", text: "Sejauh mana fasilitas dasar (listrik, air, ventilasi) memadai?", type: "scale", sub: "Fasilitas Dasar" },
+          { id: "OH17", text: "Seberapa bebas lingkungan kerja Anda dari risiko bahaya yang tersembunyi?", type: "scale", sub: "Manajemen Risiko" }
+        ]
+      },
+      {
+        menu: "Sumber Daya",
+        label: "BAGIAN 4 DARI 6",
+        title: "Bagian 4: Budaya Organisasi",
+        desc: "Nilai budaya kerja, komunikasi, tanggung jawab, dan kedisiplinan dalam organisasi.",
+        questions: [
+          { id: "OH18", text: "Apakah tim Anda berkomunikasi secara jujur dan transparan?", type: "scale" },
+          { id: "OH19", text: "Sejauh mana budaya saling membantu antar rekan kerja diterapkan?", type: "scale" },
+          { id: "OH20", text: "Apakah seluruh anggota tim paham akan target dan visi besar perusahaan?", type: "scale" },
+          { id: "OH21", text: "Apakah karyawan merasa bangga menjadi bagian dari organisasi?", type: "scale" },
+          { id: "OH22", text: "Apakah tim memiliki tingkat tanggung jawab yang tinggi terhadap tugas?", type: "scale" },
+          { id: "OH23", text: "Sejauh mana kedisiplinan waktu dijunjung tinggi dalam organisasi?", type: "scale" },
+          { id: "OH24", text: "Apakah komunikasi antar divisi/departemen berjalan lancar?", type: "scale" },
+          { id: "OH25", text: "Sejauh mana budaya saling menghargai pendapat diaplikasikan?", type: "scale" },
+          { id: "OH26", text: "Apakah tim selalu terbuka untuk mempelajari hal-hal baru (growth mindset)?", type: "scale" }
+        ]
+      },
+      {
+        menu: "Strategi",
+        label: "EVALUASI BISNIS",
+        title: "Bagian 5: Stabilitas Operasional",
+        desc: "Nilai kestabilan aktivitas operasional harian selama beberapa bulan terakhir.",
+        questions: [
+          { id: "OH27", text: "Pasokan bahan baku?", sub: "Ketersediaan dan keandalan rantai pasok eksternal.", type: "scale" },
+          { id: "OH28", text: "Proses produksi lancar?", sub: "Efisiensi alur kerja internal tanpa hambatan teknis.", type: "scale" },
+          { id: "OH29", text: "Gaji tepat waktu?", sub: "Kepatuhan siklus payroll karyawan setiap bulan.", type: "scale" },
+          { id: "OH30", text: "Pengiriman sesuai jadwal?", sub: "Ketepatan waktu logistik sampai ke tangan klien.", type: "scale" },
+          { id: "OH31", text: "Kualitas konsisten?", sub: "Stabilitas standar output produk atau layanan.", type: "scale" }
+        ]
+      },
+      {
+        menu: "Ringkasan",
+        label: "TAHAP AKHIR",
+        title: "Bagian 6: Kinerja Keuangan",
+        desc: "Evaluasi performa finansial bisnis untuk menentukan stabilitas dan potensi pertumbuhan.",
+        questions: [
+          { id: "OH32", text: "Penjualan meningkat?", type: "scale" },
+          { id: "OH33", text: "Keuntungan stabil?", type: "scale" },
+          { id: "OH34", text: "Dana cadangan?", type: "scale" },
+          { id: "OH35", text: "Arus kas sehat?", type: "scale" }
+        ]
+      }
+    ];
+
+    let currentStep = 0;
+    const answers = JSON.parse(localStorage.getItem("kuesionerAnswers")) || {};
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const activeUser = JSON.parse(localStorage.getItem("activeUser"));
+
+    if (!isLoggedIn || !activeUser) {
+      alert("Silakan login terlebih dahulu untuk mengisi kuesioner.");
+      window.location.href = "../login/login.html";
+    }
+
+    const questionContainer = document.getElementById("questionContainer");
+    const sectionTitle = document.getElementById("sectionTitle");
+    const sectionDesc = document.getElementById("sectionDesc");
+    const phaseLabel = document.getElementById("phaseLabel");
+    const progressNumber = document.getElementById("progressNumber");
+    const progressFill = document.getElementById("progressFill");
+    const stepMenu = document.getElementById("stepMenu");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+
+    function renderMenu() {
+      stepMenu.innerHTML = sections.map((section, index) => `
+        <button class="${index === currentStep ? 'active' : ''}" onclick="goToStep(${index})">
+          ${section.menu}
+        </button>
+      `).join("");
+    }
+
+    function renderStep() {
+      const section = sections[currentStep];
+      const progress = Math.round(((currentStep + 1) / sections.length) * 100);
+
+      phaseLabel.textContent = section.label;
+      sectionTitle.textContent = section.title;
+      sectionDesc.textContent = section.desc;
+      progressNumber.textContent = `${progress}%`;
+      progressFill.style.width = `${progress}%`;
+
+      questionContainer.innerHTML = section.questions.map(q => renderQuestion(q)).join("");
+
+      prevBtn.style.visibility = currentStep === 0 ? "hidden" : "visible";
+      nextBtn.textContent = currentStep === sections.length - 1 ? "Selesai & Lihat Hasil" : "Selanjutnya →";
+
+      renderMenu();
+    }
+
+    function renderQuestion(q) {
+      if (q.type === "choice") {
+        return `
+          <div class="question-card">
+            <div>
+              <span class="qid">${q.id}</span>
+              <h3>${q.text}</h3>
+            </div>
+            <div class="choice-group">
+              ${q.options.map(opt => `
+                <label>
+                  <input type="radio" name="${q.id}" value="${opt}" ${answers[q.id] === opt ? "checked" : ""} onchange="saveAnswer('${q.id}', this.value)">
+                  <span>${opt}</span>
+                </label>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (q.type === "card") {
+        return `
+          <div class="question-card vertical">
+            <span class="qid">${q.id}</span>
+            <h3>${q.text}</h3>
+            <div class="option-cards">
+              ${q.options.map(opt => `
+                <label class="option-card ${answers[q.id] === opt ? 'selected' : ''}">
+                  <input type="radio" name="${q.id}" value="${opt}" ${answers[q.id] === opt ? "checked" : ""} onchange="saveAnswer('${q.id}', this.value)">
+                  <strong>${opt}</strong>
+                  <p>${getOptionDesc(opt)}</p>
+                </label>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="question-card">
+          <div>
+            <span class="qid">${q.id}</span>
+            ${q.sub ? `<h4>${q.sub}</h4>` : ""}
+            <h3>${q.text}</h3>
+            ${q.sub && currentStep === 4 ? `<p class="subtext">${q.sub}</p>` : ""}
+          </div>
+          <div class="scale-group">
+            ${[1,2,3,4,5].map(num => `
+              <button class="${Number(answers[q.id]) === num ? 'selected' : ''}" onclick="saveAnswer('${q.id}', ${num})">
+                ${num}
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function getOptionDesc(option) {
+      if (option === "Modal Sendiri") return "Simpanan pribadi atau laba ditahan.";
+      if (option === "Keluarga/Teman") return "Pinjaman non-formal tanpa bunga tinggi.";
+      if (option === "Pinjaman Bank") return "Kredit usaha atau fasilitas perbankan.";
+      return "";
+    }
+
+    function saveAnswer(id, value) {
+      answers[id] = value;
+      localStorage.setItem("kuesionerAnswers", JSON.stringify(answers));
+      renderStep();
+    }
+
+    function goToStep(index) {
+      currentStep = index;
+      renderStep();
+    }
+
+    prevBtn.addEventListener("click", () => {
+      if (currentStep > 0) {
+        currentStep--;
+        renderStep();
+      }
+    });
+
+function calculateAssessmentResult() {
+  const activeUser = JSON.parse(localStorage.getItem("activeUser"));
+
+  if (!activeUser) {
+    alert("Silakan login terlebih dahulu untuk menyimpan hasil kuesioner.");
+    window.location.href = "../login/login.html";
+    return null;
+  }
+
+  const factorGroups = {
+    INS: ["OH1", "OH2", "OH3", "OH4", "OH5", "OH6"],
+    LDI: ["OH7", "OH8", "OH9", "OH10", "OH11", "OH12"],
+    WEQ: ["OH13", "OH14", "OH15", "OH16", "OH17"],
+    OV: ["OH18", "OH19", "OH20", "OH21", "OH22", "OH23", "OH24", "OH25", "OH26"],
+    OPS: ["OH27", "OH28", "OH29", "OH30", "OH31"],
+    ECT: ["OH32", "OH33", "OH34", "OH35"]
+  };
+
+  const factorScores = {};
+
+  Object.keys(factorGroups).forEach((factor) => {
+    const questionIds = factorGroups[factor];
+
+    const scores = questionIds
+      .map((id) => convertAnswerToScore(answers[id]))
+      .filter((score) => score !== null);
+
+    factorScores[factor] = scores.length ? average(scores) : 0;
+  });
+
+  const allScores = Object.values(factorScores).filter(score => score > 0);
+  const totalAverageScore = average(allScores);
+  const category = calculateCategory(totalAverageScore);
+
+  return {
+    assessment_id: Date.now(),
+    user_id: activeUser.user_id,
+    user_name: activeUser.name,
+    user_role: activeUser.role,
+    umkm_id: activeUser.umkm_id || activeUser.umkm.umkm_id,
+    nama_umkm: activeUser.umkm.nama_umkm,
+    sektor: activeUser.umkm.sektor,
+    assessment_date: new Date().toISOString(),
+    answers: answers,
+    factor_scores: factorScores,
+    total_average_score: totalAverageScore,
+    category: category
+  };
+}
+
+function convertAnswerToScore(answer) {
+  if (!answer) return null;
+
+  if (typeof answer === "number") return answer;
+
+  const choiceMap = {
+    "Tidak": 1,
+    "Sedang Proses": 3,
+    "Ya": 5,
+    "Modal Sendiri": 4,
+    "Keluarga/Teman": 3,
+    "Pinjaman Bank": 4
+  };
+
+  return choiceMap[answer] || null;
+}
+
+function calculateCategory(score) {
+  if (score >= 4.1) return "Sangat Baik";
+  if (score >= 3.1) return "Baik";
+  if (score >= 2.1) return "Cukup";
+  return "Buruk";
+}
+
+function average(arr) {
+  if (!arr.length) return 0;
+  return arr.reduce((sum, value) => sum + Number(value), 0) / arr.length;
+}
+
+nextBtn.addEventListener("click", () => {
+  if (currentStep < sections.length - 1) {
+    currentStep++;
+    renderStep();
+  } else {
+    const assessmentResult = calculateAssessmentResult();
+
+    if (!assessmentResult) return;
+
+    const assessments = JSON.parse(localStorage.getItem("assessments")) || [];
+
+    assessments.push(assessmentResult);
+
+    localStorage.setItem("assessments", JSON.stringify(assessments));
+    localStorage.setItem("latestAssessment", JSON.stringify(assessmentResult));
+    localStorage.setItem("assessmentCompleted", "true");
+
+    /* penting: hapus UMKM yang sebelumnya dipilih dari daftar UMKM */
+    localStorage.removeItem("selectedUmkm");
+
+    alert("Kuesioner berhasil disimpan. Hasil gabungan dapat dilihat di Detail Analisis.");
+    window.location.href = "../detail/detail_analisis.html";
+  }
+});
+
+    renderStep();
+  </script>
+</body>
+</html>
