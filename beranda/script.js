@@ -79,7 +79,7 @@ function createUserInfoCard() {
 function logoutUser() {
   localStorage.setItem('isLoggedIn', 'false');
   localStorage.removeItem('activeUser');
-  window.location.href = '../landing page/landing.html';
+  window.location.href = '../landing_page/landing.html';
 }
 
 function createDashboardNotification() {

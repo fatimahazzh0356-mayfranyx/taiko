@@ -130,7 +130,18 @@ function renderUmkmCards(umkms) {
 function openUmkmDetail(encodedUmkm) {
   const umkm = JSON.parse(decodeURIComponent(encodedUmkm));
 
+  const savedAssessments = JSON.parse(localStorage.getItem("assessments")) || [];
+  const dummyAssessments = getDummyAssessments();
+  const allAssessments = [...dummyAssessments, ...savedAssessments];
+
+  const relatedAssessments = allAssessments.filter(item => {
+    return item.umkm_id == umkm.umkm_id ||
+      normalizeText(item.nama_umkm) === normalizeText(umkm.nama_umkm);
+  });
+
   localStorage.setItem("selectedUmkm", JSON.stringify(umkm));
+  localStorage.setItem("previewAssessments", JSON.stringify(relatedAssessments));
+
   window.location.href = "../detail/detail_analisis.html";
 }
 

@@ -36,7 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  const assessments = JSON.parse(localStorage.getItem("assessments")) || [];
+  let assessments = JSON.parse(localStorage.getItem("assessments")) || [];
+const previewAssessments = JSON.parse(localStorage.getItem("previewAssessments")) || [];
+
+if (selectedUmkm && previewAssessments.length) {
+  assessments = previewAssessments;
+}
   const targetUmkm = selectedUmkm || activeUser.umkm;
 
   const targetUmkmId = targetUmkm.umkm_id;
@@ -52,11 +57,25 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("umkmInfo").textContent =
     `${targetUmkm.nama_umkm} · ${targetUmkm.sektor || "Sektor belum tersedia"}`;
 
-  if (!sameUmkmAssessments.length) {
-    document.getElementById("analysisContent").style.display = "none";
-    document.getElementById("emptyState").style.display = "block";
-    return;
+if (!sameUmkmAssessments.length) {
+  document.getElementById("analysisContent").style.display = "none";
+  document.getElementById("emptyState").style.display = "block";
+
+  const emptyState = document.getElementById("emptyState");
+
+  if (selectedUmkm) {
+    emptyState.innerHTML = `
+      <h2>Belum Ada Hasil Assessment</h2>
+      <p>
+        UMKM <b>${targetUmkm.nama_umkm}</b> belum memiliki data kuesioner,
+        sehingga detail analisis belum dapat ditampilkan.
+      </p>
+      <a href="../daftar_umkm/daftar_umkm.html">Kembali ke Daftar UMKM</a>
+    `;
   }
+
+  return;
+}
 
   const combinedResult = calculateCombinedResult(sameUmkmAssessments);
 
