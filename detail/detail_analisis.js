@@ -25,6 +25,15 @@ const factorInfo = {
   }
 };
 
+const benchmarkBoxplotData = {
+  OV: { min: 1, q1: 1, median: 2, q3: 2, max: 4, mean: 1.9 },
+  LDI: { min: 1, q1: 1, median: 2, q3: 2, max: 4, mean: 1.8 },
+  INS: { min: 1, q1: 1, median: 2, q3: 2, max: 4, mean: 1.6 },
+  OPS: { min: 1, q1: 2, median: 2.2, q3: 3, max: 4, mean: 2.4 },
+  WEQ: { min: 1.2, q1: 2.8, median: 3.3, q3: 4, max: 5, mean: 3.3 },
+  ECT: { min: 1, q1: 1.3, median: 1.8, q3: 2, max: 4, mean: 1.8 }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
   const activeUser = JSON.parse(localStorage.getItem("activeUser"));
@@ -37,11 +46,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   let assessments = JSON.parse(localStorage.getItem("assessments")) || [];
-const previewAssessments = JSON.parse(localStorage.getItem("previewAssessments")) || [];
+  const previewAssessments = JSON.parse(localStorage.getItem("previewAssessments")) || [];
 
-if (selectedUmkm && previewAssessments.length) {
-  assessments = previewAssessments;
-}
+  if (selectedUmkm && previewAssessments.length) {
+    assessments = previewAssessments;
+  }
+
   const targetUmkm = selectedUmkm || activeUser.umkm;
 
   const targetUmkmId = targetUmkm.umkm_id;
@@ -54,33 +64,88 @@ if (selectedUmkm && previewAssessments.length) {
     return itemUmkmId == targetUmkmId || itemUmkmName === targetUmkmName;
   });
 
+  const hasOwnerAssessment = sameUmkmAssessments.some(
+    item => item.user_role === "owner"
+  );
+
+  const hasEmployeeAssessment = sameUmkmAssessments.some(
+    item => item.user_role === "karyawan" || item.user_role === "employee"
+  );
+
   document.getElementById("umkmInfo").textContent =
     `${targetUmkm.nama_umkm} · ${targetUmkm.sektor || "Sektor belum tersedia"}`;
 
-if (!sameUmkmAssessments.length) {
-  document.getElementById("analysisContent").style.display = "none";
-  document.getElementById("emptyState").style.display = "block";
+  if (!sameUmkmAssessments.length) {
+    document.getElementById("analysisContent").style.display = "none";
+    document.getElementById("emptyState").style.display = "block";
 
-  const emptyState = document.getElementById("emptyState");
+    const emptyState = document.getElementById("emptyState");
 
-  if (selectedUmkm) {
-    emptyState.innerHTML = `
-      <h2>Belum Ada Hasil Assessment</h2>
-      <p>
-        UMKM <b>${targetUmkm.nama_umkm}</b> belum memiliki data kuesioner,
-        sehingga detail analisis belum dapat ditampilkan.
-      </p>
-      <a href="../daftar_umkm/daftar_umkm.html">Kembali ke Daftar UMKM</a>
-    `;
+    if (selectedUmkm) {
+      emptyState.innerHTML = `
+        <h2>Belum Ada Hasil Assessment</h2>
+        <p>
+          UMKM <b>${targetUmkm.nama_umkm}</b> belum memiliki data kuesioner,
+          sehingga detail analisis belum dapat ditampilkan.
+        </p>
+        <a href="../daftar_umkm/daftar_umkm.html">
+          Kembali ke Daftar UMKM
+        </a>
+      `;
+    }
+
+    return;
   }
 
-  return;
-}
+  if (!hasOwnerAssessment || !hasEmployeeAssessment) {
+    document.getElementById("analysisContent").style.display = "none";
+    document.getElementById("emptyState").style.display = "block";
+
+    const emptyState = document.getElementById("emptyState");
+
+    if (!hasOwnerAssessment && !hasEmployeeAssessment) {
+      emptyState.innerHTML = `
+        <h2>Assessment Belum Lengkap</h2>
+        <p>
+          Owner dan karyawan belum mengisi kuesioner.
+          Hasil analisis organisasi belum dapat ditampilkan.
+        </p>
+        <a href="../kuisioner/kuisioner.html">
+          Isi Kuesioner
+        </a>
+      `;
+    } else if (!hasOwnerAssessment) {
+      emptyState.innerHTML = `
+        <h2>Owner Belum Mengisi</h2>
+        <p>
+          Kuesioner owner belum diisi.
+          Hasil analisis akhir akan muncul setelah owner mengisi assessment.
+        </p>
+        <a href="../kuisioner/kuisioner.html">
+          Isi Kuesioner Owner
+        </a>
+      `;
+    } else if (!hasEmployeeAssessment) {
+      emptyState.innerHTML = `
+        <h2>Karyawan Belum Mengisi</h2>
+        <p>
+          Kuesioner karyawan belum diisi.
+          Hasil analisis akhir akan muncul setelah minimal satu karyawan mengisi assessment.
+        </p>
+        <a href="../kuisioner/kuisioner.html">
+          Isi Kuesioner Karyawan
+        </a>
+      `;
+    }
+
+    return;
+  }
 
   const combinedResult = calculateCombinedResult(sameUmkmAssessments);
 
   renderSummary(combinedResult, sameUmkmAssessments);
   renderFactorChart(combinedResult.factor_scores);
+  renderBenchmarkBoxplot(combinedResult.factor_scores);
   renderInsights(combinedResult);
   renderAssessmentTable(sameUmkmAssessments);
 });
@@ -120,8 +185,8 @@ function renderFactorChart(factorScores) {
 
   const labels = Object.keys(factorScores);
   const values = Object.values(factorScores);
-
   const validValues = values.filter(value => value > 0);
+
   const maxScore = Math.max(...validValues);
   const minScore = Math.min(...validValues);
 
@@ -152,10 +217,7 @@ function renderFactorChart(factorScores) {
             title: function(context) {
               const key = context[0].label;
               const info = factorInfo[key];
-
-              if (!info) return key;
-
-              return `${key} - ${info.full}`;
+              return info ? `${key} - ${info.full}` : key;
             },
             label: function(context) {
               const key = context.label;
@@ -164,6 +226,100 @@ function renderFactorChart(factorScores) {
               return [
                 `Arti: ${info ? info.id : key}`,
                 `Skor: ${Number(context.raw).toFixed(2)}`
+              ];
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          suggestedMax: 5
+        },
+        x: {
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+function renderBenchmarkBoxplot(userFactorScores) {
+  const ctx = document.getElementById("factorBoxplotChart");
+  if (!ctx) return;
+
+  const labels = Object.keys(benchmarkBoxplotData);
+
+  const boxplotValues = labels.map(key => {
+    const data = benchmarkBoxplotData[key];
+
+    return {
+      min: data.min,
+      q1: data.q1,
+      median: data.median,
+      q3: data.q3,
+      max: data.max,
+      mean: data.mean
+    };
+  });
+
+  new Chart(ctx, {
+    type: "boxplot",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Distribusi 428 UMKM",
+          data: boxplotValues,
+          backgroundColor: "rgba(143, 211, 193, 0.45)",
+          borderColor: "#1f8a70",
+          borderWidth: 1.5,
+          outlierColor: "#d9534f",
+          itemRadius: 3
+        },
+        {
+          type: "scatter",
+          label: "Skor UMKM Ini",
+          data: labels.map(key => ({
+            x: key,
+            y: Number(userFactorScores[key] || 0)
+          })),
+          backgroundColor: "#0b4f45",
+          borderColor: "#0b4f45",
+          pointRadius: 6,
+          pointHoverRadius: 8
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true
+        },
+        tooltip: {
+          callbacks: {
+            title: function(context) {
+              const key = context[0].label;
+              const info = factorInfo[key];
+
+              return info ? `${key} - ${info.full}` : key;
+            },
+            label: function(context) {
+              if (context.dataset.type === "scatter") {
+                return `Skor UMKM Ini: ${Number(context.raw.y).toFixed(2)}`;
+              }
+
+              const value = context.raw;
+
+              return [
+                `Min: ${value.min}`,
+                `Q1: ${value.q1}`,
+                `Median: ${value.median}`,
+                `Q3: ${value.q3}`,
+                `Max: ${value.max}`,
+                `Mean: ${value.mean}`
               ];
             }
           }
@@ -259,5 +415,8 @@ function normalizeText(text) {
 
 function average(arr) {
   if (!arr.length) return 0;
-  return arr.reduce((sum, value) => sum + Number(value), 0) / arr.length;
+
+  return arr.reduce((sum, value) =>
+    sum + Number(value), 0
+  ) / arr.length;
 }

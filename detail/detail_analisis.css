@@ -60,7 +60,7 @@ body {
 }
 
 .main {
-  padding: 24px 26px;
+  padding: 24px 26px 52px;
 }
 
 .topbar {
@@ -83,7 +83,7 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 18px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .summary-card {
@@ -115,14 +115,15 @@ body {
   display: grid;
   grid-template-columns: 1.4fr 0.8fr;
   gap: 18px;
-  margin-bottom: 20px;
+  margin-bottom: 28px;
 }
 
 .panel {
   background: #ffffff;
-  border-radius: 20px;
-  padding: 20px;
+  border-radius: 28px;
+  padding: 28px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+  margin-bottom: 28px;
 }
 
 .panel h2 {
@@ -153,6 +154,29 @@ canvas {
   color: #5c6d74;
   line-height: 1.6;
   font-size: 14px;
+}
+
+.benchmark-panel {
+  margin-top: 28px;
+  margin-bottom: 42px;
+  padding-bottom: 38px;
+}
+
+.boxplot-wrapper {
+  height: 390px;
+  margin-top: 18px;
+  margin-bottom: 34px;
+}
+
+.chart-desc {
+  margin: -4px 0 18px;
+  color: #6b7b83;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.table-panel {
+  margin-top: 34px;
 }
 
 .table-wrapper {
@@ -231,6 +255,10 @@ td {
   }
 
   .main {
-    padding: 16px;
+    padding: 16px 16px 40px;
+  }
+
+  .boxplot-wrapper {
+    height: 340px;
   }
 }

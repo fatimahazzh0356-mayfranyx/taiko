@@ -2,6 +2,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
   const activeUser = JSON.parse(localStorage.getItem("activeUser"));
   const assessments = JSON.parse(localStorage.getItem("assessments")) || [];
+  const hasOwnerAssessment = assessments.some(
+  item => item.user_role === "owner"
+);
+
+const hasEmployeeAssessment = assessments.some(
+  item =>
+    item.user_role === "karyawan" ||
+    item.user_role === "employee"
+);
+
+if (!hasOwnerAssessment || !hasEmployeeAssessment) {
+  document.getElementById("recommendationContainer").innerHTML = `
+    <div class="empty-recommendation">
+      <h2>Assessment Belum Lengkap</h2>
+      <p>
+        Saran dan rekomendasi baru dapat ditampilkan setelah
+        owner dan minimal satu karyawan mengisi kuesioner.
+      </p>
+
+      <a href="../kuisioner/kuisioner.html">
+        Isi Kuesioner
+      </a>
+    </div>
+  `;
+
+  return;
+}
 
   if (!isLoggedIn || !activeUser) {
     alert("Silakan login terlebih dahulu.");

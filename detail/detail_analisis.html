@@ -6,6 +6,7 @@
   <title>Detail Analisis - TAIKO & U</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot@4.4.4/build/index.umd.min.js"></script>
   <link rel="stylesheet" href="detail_analisis.css" />
 </head>
 
@@ -80,7 +81,19 @@
           </div>
         </section>
 
-        <section class="panel">
+       <section class="panel benchmark-panel">
+       <h2>Perbandingan Faktor dengan 428 UMKM</h2>
+        <p class="chart-desc">
+          Boxplot ini menampilkan distribusi skor setiap faktor kesehatan organisasi
+          berdasarkan data pembanding 428 UMKM.
+        </p>
+
+  <div class="chart-wrapper boxplot-wrapper">
+    <canvas id="factorBoxplotChart"></canvas>
+  </div>
+</section>
+
+        <section class="panel table-panel">
           <h2>Daftar Pengisi Kuesioner</h2>
           <div class="table-wrapper">
             <table>

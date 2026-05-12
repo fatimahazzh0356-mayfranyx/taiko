@@ -83,12 +83,12 @@ function logoutUser() {
 }
 
 function createDashboardNotification() {
-  const notification = document.getElementById('dashboardNotification');
+  const notification = document.getElementById("dashboardNotification");
   if (!notification) return;
 
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  const activeUser = JSON.parse(localStorage.getItem('activeUser'));
-  const assessments = JSON.parse(localStorage.getItem('assessments')) || [];
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  const activeUser = JSON.parse(localStorage.getItem("activeUser"));
+  const assessments = JSON.parse(localStorage.getItem("assessments")) || [];
 
   if (!isLoggedIn || !activeUser) {
     notification.innerHTML = `
@@ -106,41 +106,111 @@ function createDashboardNotification() {
     return;
   }
 
-  const userHasSubmitted = assessments.some(item =>
+  const activeUmkmId = activeUser.umkm_id || activeUser.umkm?.umkm_id;
+  const activeUmkmName = normalizeText(activeUser.umkm?.nama_umkm);
+
+  const sameUmkmAssessments = assessments.filter(item => {
+    const itemUmkmId = item.umkm_id;
+    const itemUmkmName = normalizeText(item.nama_umkm);
+
+    return itemUmkmId == activeUmkmId || itemUmkmName === activeUmkmName;
+  });
+
+  const hasOwnerAssessment = sameUmkmAssessments.some(item =>
+    item.user_role === "owner"
+  );
+
+  const hasEmployeeAssessment = sameUmkmAssessments.some(item =>
+    item.user_role === "karyawan" || item.user_role === "employee"
+  );
+
+  const currentUserHasSubmitted = sameUmkmAssessments.some(item =>
     item.user_id == activeUser.user_id
   );
 
-  if (!userHasSubmitted) {
+  const isOwner = activeUser.role === "owner";
+
+  if (!currentUserHasSubmitted) {
     notification.innerHTML = `
       <div class="notif notif-success">
         <div>
-          <h3>Lengkapi Kuesioner Organisasi Anda</h3>
+          <h3>Lengkapi Kuesioner ${isOwner ? "Owner" : "Karyawan"}</h3>
           <p>
             Halo <b>${activeUser.name}</b>, Anda belum mengisi kuesioner untuk UMKM
-            <b>${activeUser.umkm.nama_umkm}</b>. Silakan isi kuesioner terlebih dahulu
+            <b>${activeUser.umkm.nama_umkm}</b>. Silakan isi kuesioner sesuai role Anda
             agar hasil analisis organisasi dapat dihitung.
           </p>
         </div>
-        <a href="../kuisioner/kuisioner.html" class="notif-btn">Isi Kuesioner</a>
+        <a href="../kuisioner/kuisioner.html" class="notif-btn">
+          Isi Kuesioner
+        </a>
       </div>
     `;
     return;
   }
 
-  notification.innerHTML = `
-    <div class="notif notif-success">
-      <div>
-        <h3>Kuesioner Sudah Selesai</h3>
-        <p>
-          Data kuesioner Anda untuk UMKM <b>${activeUser.umkm.nama_umkm}</b> sudah tersimpan.
-          Anda dapat melihat hasil lengkapnya di halaman Detail Analisis.
-        </p>
+  if (!hasOwnerAssessment && hasEmployeeAssessment) {
+    notification.innerHTML = `
+      <div class="notif notif-warning">
+        <div>
+          <h3>Menunggu Kuesioner Owner</h3>
+          <p>
+            Kuesioner karyawan sudah tersimpan. Hasil akhir akan muncul setelah
+            owner UMKM <b>${activeUser.umkm.nama_umkm}</b> login dan mengisi
+            kuesioner owner.
+          </p>
+        </div>
+        <a href="../profil/profil.html" class="notif-btn">
+          Lihat Profil UMKM
+        </a>
       </div>
-      <a href="../detail/detail_analisis.html" class="notif-btn" onclick="localStorage.removeItem('selectedUmkm')">
-        Lihat Detail Analisis
-      </a>
-    </div>
-  `;
+    `;
+    return;
+  }
+
+  if (hasOwnerAssessment && !hasEmployeeAssessment) {
+    notification.innerHTML = `
+      <div class="notif notif-warning">
+        <div>
+          <h3>Menunggu Kuesioner Karyawan</h3>
+          <p>
+            Kuesioner owner sudah tersimpan. Hasil akhir akan muncul setelah minimal
+            satu karyawan UMKM <b>${activeUser.umkm.nama_umkm}</b> login dan mengisi
+            kuesioner karyawan.
+          </p>
+        </div>
+        <a href="../profil/profil.html" class="notif-btn">
+          Lihat Profil UMKM
+        </a>
+      </div>
+    `;
+    return;
+  }
+
+  if (hasOwnerAssessment && hasEmployeeAssessment) {
+    notification.innerHTML = `
+      <div class="notif notif-success">
+        <div>
+          <h3>Assessment Sudah Lengkap</h3>
+          <p>
+            Data kuesioner owner dan karyawan untuk UMKM
+            <b>${activeUser.umkm.nama_umkm}</b> sudah lengkap.
+            Anda dapat melihat hasil analisis akhir.
+          </p>
+        </div>
+        <a href="../detail/detail_analisis.html" class="notif-btn" onclick="localStorage.removeItem('selectedUmkm'); localStorage.removeItem('previewAssessments');">
+          Lihat Detail Analisis
+        </a>
+      </div>
+    `;
+  }
+}
+
+function normalizeText(text) {
+  return String(text || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 }
 
 function updateSummaryCards(data) {
