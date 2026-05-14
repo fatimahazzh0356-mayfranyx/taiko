@@ -253,7 +253,7 @@ prevBtn.addEventListener("click", () => {
   }
 });
 
-nextBtn.addEventListener("click", () => {
+nextBtn.addEventListener("click", async () => {
   if (!validateCurrentSection()) return;
 
   if (currentStep < sections.length - 1) {
@@ -273,8 +273,17 @@ nextBtn.addEventListener("click", () => {
     return;
   }
 
+  const predictionResult = await getPredictionFromAPI(backendPayload);
+
+  assessmentResult.prediction = predictionResult.prediction;
+  assessmentResult.probability = predictionResult.probability;
+  assessmentResult.recommendation = predictionResult.recommendation;
+
   console.log("Payload siap dikirim ke backend:", backendPayload);
+  console.log("Hasil prediksi dari API:", predictionResult);
+
   localStorage.setItem("latestBackendPayload", JSON.stringify(backendPayload));
+  localStorage.setItem("latestPrediction", JSON.stringify(predictionResult));
 
   const assessments = JSON.parse(localStorage.getItem("assessments")) || [];
 
@@ -290,7 +299,10 @@ nextBtn.addEventListener("click", () => {
   localStorage.removeItem("selectedUmkm");
   localStorage.removeItem("previewAssessments");
 
-  alert("Kuesioner berhasil disimpan. Hasil akhir akan tampil jika owner dan karyawan sudah sama-sama mengisi.");
+  alert(
+    `Kuesioner berhasil disimpan.\n\nPrediksi sementara: ${predictionResult.prediction}\nProbabilitas: ${predictionResult.probability}%`
+  );
+
   window.location.href = "../detail/detail_analisis.html";
 });
 
@@ -397,6 +409,53 @@ function validateBackendPayload(payload, role) {
     isValid: errors.length === 0,
     errors
   };
+}
+
+async function getPredictionFromAPI(payload) {
+  console.log("Mengirim payload ke API backend:", payload);
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const scores = [
+        payload.organizational_values,
+        payload.leader_involvement,
+        payload.institutional_resources,
+        payload.operational_stability,
+        payload.work_environment_quality,
+        payload.economics_performance
+      ]
+        .map(Number)
+        .filter(score => score > 0);
+
+      const meanScore = average(scores);
+      const prediction = calculateCategory(meanScore);
+
+      let probability = Math.round((meanScore / 5) * 100);
+      if (probability > 100) probability = 100;
+
+      let recommendation = "Pertahankan kondisi organisasi dan lakukan evaluasi berkala.";
+
+      if (prediction === "Buruk") {
+        recommendation = "Prioritaskan perbaikan mendasar pada kepemimpinan, sumber daya, dan stabilitas operasional.";
+      } else if (prediction === "Cukup") {
+        recommendation = "Lakukan intervensi bertahap pada faktor dengan skor terendah.";
+      } else if (prediction === "Baik") {
+        recommendation = "Pertahankan performa dan tingkatkan faktor yang masih berada di bawah rata-rata.";
+      } else if (prediction === "Sangat Baik") {
+        recommendation = "UMKM dapat dijadikan contoh praktik baik dan fokus pada inovasi berkelanjutan.";
+      }
+
+      resolve({
+        status: "success",
+        source: "simulated-api",
+        prediction,
+        probability,
+        recommendation,
+        received_payload: payload,
+        predicted_at: new Date().toISOString()
+      });
+    }, 600);
+  });
 }
 
 function getFactorGroupsByRole(role) {

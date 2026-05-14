@@ -5,7 +5,7 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f4f7f6;
+  background: transparent;
   color: #24343a;
 }
 
@@ -180,6 +180,8 @@ body {
 .logout-btn:hover {
   background: #f8d4d4;
 }
+
+
 
 /* ================= STAT CARD ================= */
 

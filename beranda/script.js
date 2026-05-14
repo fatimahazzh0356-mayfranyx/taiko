@@ -1,30 +1,260 @@
-document.addEventListener('DOMContentLoaded', () => {
-  fetch('data.json')
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error('Gagal memuat data.json');
-      }
-      return response.json();
-    })
-    .then((data) => {
-      console.log('Data berhasil dimuat:', data);
-      
-      createUserInfoCard();
-      createDashboardNotification();
-      updateSummaryCards(data);
-      createHealthyCard(data.healthyProbability);
-      createRecommendationCard();
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const dashboardData = await loadDashboardData();
 
-      safeRun(() => createFactorChart(data.factors), 'Statistik Faktor');
-      safeRun(() => createDistributionChart(data.distribution), 'Distribusi Kategori');
-      safeRun(() => createTopBottomChart(data.topBottom), 'Top Bottom UMKM');
-      safeRun(() => createBoxplotChart(data.boxplot), 'Boxplot');
-    })
-    .catch((error) => {
-      console.error('Error:', error);
-      showErrorState(error.message);
-    });
+    console.log('Dashboard Data:', dashboardData);
+
+    createUserInfoCard();
+    createDashboardNotification();
+
+    updateSummaryCards(dashboardData);
+
+    createHealthyCard(dashboardData.healthyProbability);
+
+    createRecommendationCard();
+
+    safeRun(
+      () => createFactorChart(dashboardData.factors),
+      'Statistik Faktor'
+    );
+
+    safeRun(
+      () => createDistributionChart(dashboardData.distribution),
+      'Distribusi Kategori'
+    );
+
+    safeRun(
+      () => createTopBottomChart(dashboardData.topBottom),
+      'Top Bottom UMKM'
+    );
+
+    safeRun(
+      () => createBoxplotChart(dashboardData.boxplot),
+      'Boxplot'
+    );
+
+  } catch (error) {
+    console.error('Error dashboard:', error);
+    showErrorState(error.message);
+  }
 });
+
+async function loadDashboardData() {
+  try {
+    const response = await fetch('../data/data_umkm.json');
+
+    if (!response.ok) {
+      throw new Error('Gagal memuat data_umkm.json');
+    }
+
+    const jsonData = await response.json();
+
+    console.log('Data JSON berhasil dimuat:', jsonData);
+
+    const assessments =
+      JSON.parse(localStorage.getItem('assessments')) || [];
+
+    const combinedData = convertJsonToDashboardFormat(
+      jsonData,
+      assessments
+    );
+
+    return combinedData;
+
+  } catch (error) {
+    console.error('Error loadDashboardData:', error);
+    throw error;
+  }
+}
+
+function convertJsonToDashboardFormat(jsonData, assessments) {
+  const allUmkm = [...jsonData];
+
+  const groupedAssessments = groupAssessmentsByUmkm(assessments);
+
+  groupedAssessments.forEach(group => {
+    const combinedUmkm = combineAssessmentGroup(group);
+    if (combinedUmkm) {
+      allUmkm.push(combinedUmkm);
+    }
+  });
+
+  const factors = [
+    {
+      name: "OV",
+      values: allUmkm.map(x => Number(x.organizational_values || 0))
+    },
+    {
+      name: "LDI",
+      values: allUmkm.map(x => Number(x.leader_involvement || 0))
+    },
+    {
+      name: "INS",
+      values: allUmkm.map(x => Number(x.institutional_resources || 0))
+    },
+    {
+      name: "OPS",
+      values: allUmkm.map(x => Number(x.operational_stability || 0))
+    },
+    {
+      name: "WEQ",
+      values: allUmkm.map(x => Number(x.work_environment_quality || 0))
+    },
+    {
+      name: "ECT",
+      values: allUmkm.map(x => Number(x.economics_performance || 0))
+    }
+  ];
+
+  const factorSummary = factors.map((factor) => {
+    const values = factor.values.filter(v => v > 0);
+
+    return {
+      name: factor.name,
+      mean: average(values),
+      stdDev: calculateStdDev(values),
+      min: values.length ? Math.min(...values) : 0,
+      max: values.length ? Math.max(...values) : 0
+    };
+  });
+
+  const distribution = [
+    {
+      category: "Buruk",
+      count: allUmkm.filter(x =>
+        calculateOverallScore(x) < 2.1
+      ).length
+    },
+    {
+      category: "Cukup",
+      count: allUmkm.filter(x => {
+        const score = calculateOverallScore(x);
+        return score >= 2.1 && score < 3.1;
+      }).length
+    },
+    {
+      category: "Baik",
+      count: allUmkm.filter(x => {
+        const score = calculateOverallScore(x);
+        return score >= 3.1 && score < 4.1;
+      }).length
+    },
+    {
+      category: "Sangat Baik",
+      count: allUmkm.filter(x =>
+        calculateOverallScore(x) >= 4.1
+      ).length
+    }
+  ];
+
+  const sortedUmkm = [...allUmkm]
+    .map(item => ({
+      id: item.id_umkm,
+      score: calculateOverallScore(item)
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  const topBottom = {
+    top3: sortedUmkm.slice(0, 3),
+    bottom3: sortedUmkm.slice(-3).reverse()
+  };
+
+  const boxplot = factors.map((factor) => ({
+    label: factor.name,
+    items: factor.values.filter(v => v > 0)
+  }));
+
+  const healthyCount =
+    distribution.find(x => x.category === "Baik")?.count || 0;
+
+  const totalCount = allUmkm.length;
+
+  return {
+    factors: factorSummary,
+    distribution,
+    topBottom,
+    boxplot,
+    healthyProbability: {
+      percentage: totalCount ? (healthyCount / totalCount) * 100 : 0,
+      healthyCount,
+      totalCount
+    }
+  };
+}
+
+function groupAssessmentsByUmkm(assessments) {
+  const groups = {};
+
+  assessments.forEach(item => {
+    const key =
+      item.umkm_id ||
+      normalizeText(item.nama_umkm);
+
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+
+    groups[key].push(item);
+  });
+
+  return Object.values(groups);
+}
+
+function combineAssessmentGroup(group) {
+  if (!group.length) return null;
+
+  const first = group[0];
+
+  const getFactorAverage = (factor) => {
+    const values = group
+      .map(item => Number(item.factor_scores?.[factor]))
+      .filter(value => !isNaN(value) && value > 0);
+
+    return values.length ? average(values) : 0;
+  };
+
+  return {
+    id_umkm: first.umkm_id || first.id_umkm || normalizeText(first.nama_umkm),
+    nama_umkm: first.nama_umkm || "UMKM Baru",
+    sektor: first.sektor || "Sektor belum tersedia",
+
+    organizational_values: getFactorAverage("OV"),
+    leader_involvement: getFactorAverage("LDI"),
+    institutional_resources: getFactorAverage("INS"),
+    operational_stability: getFactorAverage("OPS"),
+    work_environment_quality: getFactorAverage("WEQ"),
+    economics_performance: getFactorAverage("ECT")
+  };
+}
+
+function calculateOverallScore(item) {
+  const scores = [
+    item.organizational_values,
+    item.leader_involvement,
+    item.institutional_resources,
+    item.operational_stability,
+    item.work_environment_quality,
+    item.economics_performance
+  ]
+  .map(Number)
+  .filter(v => v > 0);
+
+  return average(scores);
+}
+
+function calculateStdDev(values) {
+  if (!values.length) return 0;
+
+  const avg = average(values);
+
+  const squareDiffs = values.map(value =>
+    Math.pow(value - avg, 2)
+  );
+
+  return Math.sqrt(
+    average(squareDiffs)
+  );
+}
 
 function safeRun(callback, chartName) {
   try {
@@ -442,11 +672,12 @@ function createBoxplotChart(boxplotData) {
       datasets: [{
         label: 'Sebaran Skor',
         data: boxplotData.map((x) => x.items),
-        backgroundColor: 'rgba(31, 138, 112, 0.18)',
+        outlierBackgroundColor: 'rgba(0, 0, 0, 0.12)',
+        itemBackgroundColor: 'rgba(0, 0, 0, 0.08)',
         borderColor: '#1f8a70',
         borderWidth: 2,
-        outlierRadius: 4,
-        itemRadius: 3,
+        outlierRadius: 2,
+        itemRadius: 1,
         padding: 12
       }]
     },

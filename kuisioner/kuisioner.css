@@ -5,7 +5,7 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f4f7f6;
+  background: transparent;
   color: #1f2d33;
 }
 
@@ -26,11 +26,11 @@ body {
 
 .sidebar h2 {
   margin: 0 0 28px;
-  color: #0b4f43;
+  color: #ffffff;
 }
 
 .sidebar p {
-  color: #5c6d74;
+  color: #f9f9f9;
   line-height: 1.5;
   margin-bottom: 30px;
 }
@@ -204,18 +204,62 @@ body {
 
 .scale-group button {
   border: none;
-  background: #eef0f1;
+
+  background: rgba(255,255,255,0.72);
+
+  color: #176654;
+
   padding: 13px 16px;
-  border-radius: 10px;
-  font-weight: 700;
+
+  border-radius: 14px;
+
+  font-weight: 800;
+
   cursor: pointer;
-  min-width: 46px;
+
+  min-width: 50px;
+
+  font-size: 15px;
+
+  backdrop-filter: blur(10px);
+
+  border: 1px solid rgba(255,255,255,0.55);
+
+  box-shadow:
+    0 8px 18px rgba(31,138,112,0.08);
+
+  transition: all 0.22s ease;
 }
 
+/* hover */
+.scale-group button:hover {
+  background: #23a287;
+
+  color: white;
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 24px rgba(31,138,112,0.18);
+}
+
+/* aktif */
 .scale-group button.selected {
-  background: #0b8f7a;
+  background:
+    linear-gradient(
+      135deg,
+      #1f8a70,
+      #27ae8a
+    );
+
   color: #ffffff;
-  box-shadow: 0 6px 14px rgba(11,143,122,0.25);
+
+  border: 1px solid rgba(255,255,255,0.35);
+
+  box-shadow:
+    0 12px 28px rgba(31,138,112,0.28);
+
+  transform: scale(1.04);
 }
 
 .option-cards {
@@ -311,4 +355,82 @@ body {
   .option-cards {
     grid-template-columns: 1fr;
   }
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #0f6f5b, #1f8a70) !important;
+  color: white !important;
+}
+
+.sidebar .brand h2 {
+  color: #ffffff !important;
+}
+
+.sidebar .brand p {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+#stepMenu button {
+  background: rgba(255, 255, 255, 0.14) !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+#stepMenu button:hover {
+  background: rgba(255, 255, 255, 0.24) !important;
+  color: #ffffff !important;
+  transform: translateX(4px);
+}
+
+#stepMenu button.active {
+  background: #ffffff !important;
+  color: #0f6f5b !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+.back-btn,
+.sidebar a {
+  background: rgba(255, 255, 255, 0.88) !important;
+  color: #0f6f5b !important;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.back-btn:hover,
+.sidebar a:hover {
+  background: #ffffff !important;
+  color: #0b5f4e !important;
+}
+
+/* BRAND SIDEBAR FIX */
+
+.sidebar .brand h2 {
+  color: #ffffff !important;
+  opacity: 1 !important;
+
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.sidebar .brand p {
+  color: rgba(255,255,255,0.92) !important;
+  opacity: 1 !important;
+
+  font-size: 1.05rem;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* BIAR SIDEBAR NYA GA TERLALU PEKAT */
+.sidebar {
+  background:
+    linear-gradient(
+      180deg,
+      #177b66 0%,
+      #239b82 100%
+    ) !important;
 }

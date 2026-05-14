@@ -145,7 +145,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderSummary(combinedResult, sameUmkmAssessments);
   renderFactorChart(combinedResult.factor_scores);
+  renderRadarChart(combinedResult.factor_scores);
   renderBenchmarkBoxplot(combinedResult.factor_scores);
+  renderBenchmarkInsight(combinedResult.factor_scores);
   renderInsights(combinedResult);
   renderAssessmentTable(sameUmkmAssessments);
 });
@@ -238,6 +240,97 @@ function renderFactorChart(factorScores) {
         },
         x: {
           grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+function renderRadarChart(factorScores) {
+  const ctx = document.getElementById("radarChart");
+
+  if (!ctx) return;
+
+  if (window.radarChartInstance) {
+    window.radarChartInstance.destroy();
+  }
+
+  const labels = [
+    "OV",
+    "LDI",
+    "INS",
+    "OPS",
+    "WEQ",
+    "ECT"
+  ];
+
+  const values = labels.map(label =>
+    Number(factorScores[label] || 0)
+  );
+
+  window.radarChartInstance = new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Skor Faktor UMKM",
+          data: values,
+          fill: true,
+          backgroundColor: "rgba(31, 138, 112, 0.18)",
+          borderColor: "#1f8a70",
+          borderWidth: 3,
+          pointBackgroundColor: "#1f8a70",
+          pointBorderColor: "#ffffff",
+          pointHoverBackgroundColor: "#ffffff",
+          pointHoverBorderColor: "#1f8a70",
+          pointRadius: 5
+        }
+      ]
+    },
+
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+
+      plugins: {
+        legend: {
+          labels: {
+            color: "#24343a",
+            font: {
+              size: 14,
+              weight: "700"
+            }
+          }
+        }
+      },
+
+      scales: {
+        r: {
+          min: 0,
+          max: 5,
+
+          ticks: {
+            stepSize: 1,
+            backdropColor: "transparent",
+            color: "#6b7b83"
+          },
+
+          grid: {
+            color: "rgba(0,0,0,0.08)"
+          },
+
+          angleLines: {
+            color: "rgba(0,0,0,0.08)"
+          },
+
+          pointLabels: {
+            color: "#24343a",
+            font: {
+              size: 14,
+              weight: "700"
+            }
+          }
         }
       }
     }
@@ -338,6 +431,69 @@ function renderBenchmarkBoxplot(userFactorScores) {
   });
 }
 
+function renderBenchmarkInsight(userFactorScores) {
+  const insightEl = document.getElementById("benchmarkInsight");
+  if (!insightEl) return;
+
+  const entries = Object.entries(userFactorScores)
+    .filter(([, score]) => Number(score) > 0);
+
+  if (!entries.length) return;
+
+  const highest = entries.reduce((a, b) => b[1] > a[1] ? b : a);
+  const lowest = entries.reduce((a, b) => b[1] < a[1] ? b : a);
+
+  const highestInfo = factorInfo[highest[0]];
+  const lowestInfo = factorInfo[lowest[0]];
+
+  insightEl.innerHTML = `
+    <div class="insight-intro">
+      <span class="insight-label">Interpretasi Boxplot</span>
+      <h3>Posisi UMKM dibandingkan 428 UMKM pembanding</h3>
+      <p>
+        Boxplot membantu melihat apakah skor faktor UMKM berada di bawah, setara,
+        atau lebih tinggi dibanding mayoritas UMKM lain. Kotak menunjukkan rentang nilai
+        yang paling banyak muncul, sedangkan garis tengah menunjukkan median.
+      </p>
+    </div>
+
+    <div class="insight-grid">
+      <div class="insight-mini-card success">
+        <small>Faktor Terkuat</small>
+        <div>
+          <span class="factor-code">${highest[0]}</span>
+          <span class="factor-name">${highestInfo?.id || highest[0]}</span>
+        </div>
+        <p>
+          Skor <b>${Number(highest[1]).toFixed(2)}</b>. Faktor ini menjadi kekuatan utama UMKM
+          dan dapat dipertahankan sebagai modal organisasi.
+        </p>
+      </div>
+
+      <div class="insight-mini-card warning">
+        <small>Prioritas Perbaikan</small>
+        <div>
+          <span class="factor-code">${lowest[0]}</span>
+          <span class="factor-name">${lowestInfo?.id || lowest[0]}</span>
+        </div>
+        <p>
+          Skor <b>${Number(lowest[1]).toFixed(2)}</b>. Faktor ini menjadi area terendah
+          dari hasil kuesioner dan perlu mendapat perhatian lebih dulu.
+        </p>
+      </div>
+    </div>
+
+    <div class="insight-note">
+      <p>
+        <b>Cara baca titik “Skor UMKM Ini”:</b>
+        titik di atas kotak berarti lebih baik dari mayoritas pembanding,
+        titik di dalam kotak berarti masih berada pada rentang umum,
+        dan titik di bawah kotak berarti faktor tersebut perlu ditingkatkan.
+      </p>
+    </div>
+  `;
+}
+
 function renderInsights(result) {
   const insightBox = document.getElementById("insightBox");
   const scores = result.factor_scores;
@@ -346,31 +502,116 @@ function renderInsights(result) {
 
   if (!entries.length) {
     insightBox.innerHTML = `
-      <div class="insight-item">
+      <div class="analysis-action">
         Data faktor belum tersedia untuk dianalisis.
       </div>
     `;
     return;
   }
 
-  const strongest = entries.reduce((a, b) => b[1] > a[1] ? b : a);
-  const weakest = entries.reduce((a, b) => b[1] < a[1] ? b : a);
+  const values = entries.map(([, score]) => Number(score));
+  const highest = Math.max(...values);
+  const lowest = Math.min(...values);
+  const gap = highest - lowest;
+
+  const lowFactors = entries
+    .filter(([, score]) => Number(score) < 3.5)
+    .map(([factor]) => factor);
+
+  const highFactors = entries
+    .filter(([, score]) => Number(score) >= 4)
+    .map(([factor]) => factor);
+
+  let balanceStatus = "";
+  let balanceDesc = "";
+  let riskLevel = "";
+  let focusText = "";
+  let strategyText = "";
+
+  if (gap <= 0.75) {
+    balanceStatus = "Stabil";
+    balanceDesc = "Skor antar faktor relatif merata dan tidak menunjukkan ketimpangan besar.";
+  } else if (gap <= 1.5) {
+    balanceStatus = "Cukup Seimbang";
+    balanceDesc = "Ada perbedaan antar faktor, tetapi selisihnya masih dalam batas yang cukup wajar.";
+  } else {
+    balanceStatus = "Belum Seimbang";
+    balanceDesc = "Selisih antar faktor cukup besar, sehingga ada area yang tertinggal dibanding faktor lainnya.";
+  }
+
+  if (lowFactors.length >= 3) {
+    riskLevel = "Evaluasi Menyeluruh";
+    focusText = "Beberapa faktor masih berada di bawah batas aman.";
+    strategyText = "Lakukan evaluasi bertahap pada pembagian kerja, kepemimpinan, sumber daya, dan stabilitas operasional.";
+  } else if (lowFactors.length >= 1) {
+    riskLevel = "Fokus Terarah";
+    focusText = `Faktor ${lowFactors.join(", ")} perlu menjadi perhatian utama.`;
+    strategyText = "Mulai dari faktor terendah terlebih dahulu, lalu lanjutkan ke faktor pendukung lain.";
+  } else {
+    riskLevel = "Relatif Aman";
+    focusText = "Tidak ada faktor yang berada pada level rendah.";
+    strategyText = "Fokus berikutnya adalah menjaga konsistensi, efisiensi, dan inovasi organisasi.";
+  }
 
   insightBox.innerHTML = `
-    <div class="insight-item">
-      Skor gabungan organisasi berada pada kategori <b>${result.category}</b> dengan rata-rata
-      <b>${result.total_average_score.toFixed(2)}</b>.
+    <div class="analysis-summary-card">
+      <span class="analysis-label">Keseimbangan Faktor</span>
+      <h3>${balanceStatus}</h3>
+      <p>${balanceDesc}</p>
     </div>
 
-    <div class="insight-item">
-      Faktor terkuat adalah <b>${strongest[0]}</b> dengan skor <b>${strongest[1].toFixed(2)}</b>.
-      Faktor ini dapat menjadi modal utama dalam pengembangan organisasi.
+    <div class="analysis-metric-grid">
+      <div class="analysis-metric-card">
+        <span>Selisih Skor</span>
+        <strong>${gap.toFixed(2)}</strong>
+        <p>Tertinggi - terendah</p>
+      </div>
+
+      <div class="analysis-metric-card">
+        <span>Faktor Rendah</span>
+        <strong>${lowFactors.length}</strong>
+        <p>${lowFactors.length ? lowFactors.join(", ") : "Tidak ada"}</p>
+      </div>
+
+      <div class="analysis-metric-card">
+        <span>Faktor Kuat</span>
+        <strong>${highFactors.length}</strong>
+        <p>${highFactors.length ? highFactors.join(", ") : "Belum ada"}</p>
+      </div>
     </div>
 
-    <div class="insight-item">
-      Faktor yang paling perlu diperhatikan adalah <b>${weakest[0]}</b> dengan skor
-      <b>${weakest[1].toFixed(2)}</b>. Area ini dapat menjadi prioritas perbaikan.
+    <div class="analysis-action">
+      <b>Tingkat Risiko Perbaikan</b><br>
+      <span class="risk-label">${riskLevel}</span><br>
+      ${focusText}
     </div>
+
+    <div class="analysis-action">
+      <b>Saran Strategi</b><br>
+      ${strategyText}
+    </div>
+
+<div class="analysis-action action-plan">
+  <b>Prioritas Aksi 30 Hari</b>
+  <ul>
+    <li><span>1</span> Evaluasi faktor dengan skor terendah.</li>
+    <li><span>2</span> Tentukan satu tindakan perbaikan paling realistis.</li>
+    <li><span>3</span> Pantau perubahan melalui kuesioner berikutnya.</li>
+  </ul>
+</div>
+
+<div class="analysis-action recommendation-cta">
+  <b>Butuh Rekomendasi Perbaikan?</b>
+  <p>
+    Sistem telah menyiapkan saran strategi dan langkah pengembangan organisasi
+    berdasarkan hasil analisis UMKM ini.
+  </p>
+
+  <a href="../saran_rekomendasi/saran_rekomendasi.html" class="recommendation-btn">
+    Lihat Saran & Rekomendasi
+  </a>
+</div>
+
   `;
 }
 

@@ -1,14 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("searchInput");
+  const sectorFilter = document.getElementById("sectorFilter");
+  const categoryFilter = document.getElementById("categoryFilter");
+  const sortFilter = document.getElementById("sortFilter");
 
-let savedUmkms = JSON.parse(localStorage.getItem("umkms")) || [];
-let savedAssessments = JSON.parse(localStorage.getItem("assessments")) || [];
+  const savedUmkms = JSON.parse(localStorage.getItem("umkms")) || [];
+  const savedAssessments = JSON.parse(localStorage.getItem("assessments")) || [];
 
-let dummyUmkms = getDummyUmkms();
-let dummyAssessments = getDummyAssessments();
+  const dummyUmkms = getDummyUmkms();
+  const dummyAssessments = getDummyAssessments();
 
-let umkms = [...dummyUmkms, ...savedUmkms];
-let assessments = [...dummyAssessments, ...savedAssessments];
+  const umkms = [...dummyUmkms, ...savedUmkms];
+  const assessments = [...dummyAssessments, ...savedAssessments];
 
   const enrichedUmkms = umkms.map(umkm => {
     const result = calculateUmkmHealth(umkm, assessments);
@@ -22,20 +25,69 @@ let assessments = [...dummyAssessments, ...savedAssessments];
     };
   });
 
+  populateSectorFilter(enrichedUmkms);
   renderSummary(enrichedUmkms);
   renderUmkmCards(enrichedUmkms);
 
-  searchInput.addEventListener("input", () => {
+  function applyFilters() {
     const keyword = normalizeText(searchInput.value);
+    const selectedSector = sectorFilter.value;
+    const selectedCategory = categoryFilter.value;
+    const selectedSort = sortFilter.value;
 
-    const filtered = enrichedUmkms.filter(umkm =>
-      normalizeText(umkm.nama_umkm).includes(keyword) ||
-      normalizeText(umkm.sektor).includes(keyword)
-    );
+    let filtered = enrichedUmkms.filter(umkm => {
+      const matchKeyword =
+        normalizeText(umkm.nama_umkm).includes(keyword) ||
+        normalizeText(umkm.sektor).includes(keyword);
 
+      const matchSector =
+        selectedSector === "all" || umkm.sektor === selectedSector;
+
+      const matchCategory =
+        selectedCategory === "all" || umkm.category === selectedCategory;
+
+      return matchKeyword && matchSector && matchCategory;
+    });
+
+    if (selectedSort === "highest") {
+      filtered.sort((a, b) => b.percentage - a.percentage);
+    }
+
+    if (selectedSort === "lowest") {
+      filtered.sort((a, b) => a.percentage - b.percentage);
+    }
+
+    if (selectedSort === "name") {
+      filtered.sort((a, b) => String(a.nama_umkm).localeCompare(String(b.nama_umkm)));
+    }
+
+    renderSummary(filtered);
     renderUmkmCards(filtered);
-  });
+  }
+
+  searchInput.addEventListener("input", applyFilters);
+  sectorFilter.addEventListener("change", applyFilters);
+  categoryFilter.addEventListener("change", applyFilters);
+  sortFilter.addEventListener("change", applyFilters);
 });
+
+function populateSectorFilter(umkms) {
+  const sectorFilter = document.getElementById("sectorFilter");
+  if (!sectorFilter) return;
+
+  const sectors = [...new Set(
+    umkms
+      .map(umkm => umkm.sektor)
+      .filter(Boolean)
+  )].sort();
+
+  sectorFilter.innerHTML = `
+    <option value="all">Semua Sektor</option>
+    ${sectors.map(sector => `
+      <option value="${sector}">${sector}</option>
+    `).join("")}
+  `;
+}
 
 function calculateUmkmHealth(umkm, assessments) {
   const umkmId = umkm.umkm_id;
@@ -89,7 +141,7 @@ function renderUmkmCards(umkms) {
   if (!umkms.length) {
     grid.innerHTML = `
       <div class="empty-message">
-        Tidak ada UMKM yang cocok dengan pencarian.
+        Tidak ada UMKM yang cocok dengan filter atau pencarian.
       </div>
     `;
     return;
@@ -108,7 +160,7 @@ function renderUmkmCards(umkms) {
         </div>
 
         <h3>${umkm.nama_umkm}</h3>
-        <span class="sector">${umkm.sektor}</span>
+        <span class="sector">${umkm.sektor || "Sektor belum tersedia"}</span>
 
         <div class="score-row">
           <strong>Kesehatan Organisasi</strong>
